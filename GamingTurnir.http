@@ -1,0 +1,6 @@
+@GamingTurnir_HostAddress = http://localhost:5177
+
+GET {{GamingTurnir_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
