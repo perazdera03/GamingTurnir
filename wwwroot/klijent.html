@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gaming Turnir</title>
-  <!-- =====================POCETAK CSS POGLAVLJA ===================== -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #0a0f1e; color: #e2e8f0; min-height: 100vh; }
@@ -65,7 +64,6 @@
     #toast.error { background: #ef4444; }
   </style>
 </head>
-<!-- ================== KRAJ CSS POGLAVLJA ================== -->
 <body>
 
 <header>
@@ -76,11 +74,13 @@
     <button id="btnLogout" onclick="logout()">Odjavi se</button>
   </div>
 </header>
+
 <nav id="mainNav">
   <button onclick="showPage('timovi')" id="nav-timovi">Timovi</button>
   <button onclick="showPage('turniri')" id="nav-turniri">Turniri</button>
   <button onclick="showPage('mecevi')" id="nav-mecevi">Mečevi</button>
   <button onclick="showPage('korisnici')" id="nav-korisnici" style="display:none">Korisnici</button>
+  <button onclick="showPage('clanovi')" id="nav-clanovi" style="display:none">Clanovi tima</button>
 </nav>
 
 <main>
@@ -94,6 +94,7 @@
     <button class="btn-primary" onclick="login()">Prijavi se</button>
     <div id="loginError"></div>
   </div>
+
   <div class="page" id="page-timovi">
     <div class="section-header">
       <h2>Timovi</h2>
@@ -104,6 +105,7 @@
       <tbody id="tbTimovi"><tr><td colspan="5" class="empty-state">Učitavanje...</td></tr></tbody>
     </table>
   </div>
+
   <div class="page" id="page-turniri">
     <div class="section-header">
       <h2>Turniri</h2>
@@ -114,6 +116,7 @@
       <tbody id="tbTurniri"><tr><td colspan="5" class="empty-state">Učitavanje...</td></tr></tbody>
     </table>
   </div>
+
   <div class="page" id="page-mecevi">
     <div class="section-header">
       <h2>Mečevi</h2>
@@ -124,6 +127,18 @@
       <tbody id="tbMecevi"><tr><td colspan="7" class="empty-state">Učitavanje...</td></tr></tbody>
     </table>
   </div>
+
+  <div class="page" id="page-clanovi">
+    <div class="section-header">
+      <h2>Clanovi tima</h2>
+      <button class="btn-add" id="btnDodajClana" onclick="openModal('clan')">+ Dodaj clana</button>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Korisnik</th><th>Tim</th><th>Uloga</th><th></th></tr></thead>
+      <tbody id="tbClanovi"><tr><td colspan="5" class="empty-state">Ucitavanje...</td></tr></tbody>
+    </table>
+  </div>
+
   <div class="page" id="page-korisnici">
     <div class="section-header">
       <h2>Korisnici</h2>
@@ -134,8 +149,8 @@
       <tbody id="tbKorisnici"><tr><td colspan="4" class="empty-state">Učitavanje...</td></tr></tbody>
     </table>
   </div>
-
 </main>
+
 <div class="modal-overlay" id="modal-tim">
   <div class="modal">
     <h3 id="modal-tim-title">Novi tim</h3>
@@ -150,6 +165,7 @@
     </div>
   </div>
 </div>
+
 <div class="modal-overlay" id="modal-turnir">
   <div class="modal">
     <h3 id="modal-turnir-title">Novi turnir</h3>
@@ -164,6 +180,7 @@
     </div>
   </div>
 </div>
+
 <div class="modal-overlay" id="modal-mec">
   <div class="modal">
     <h3 id="modal-mec-title">Novi meč</h3>
@@ -181,6 +198,7 @@
     </div>
   </div>
 </div>
+
 <div class="modal-overlay" id="modal-korisnik">
   <div class="modal">
     <h3 id="modal-korisnik-title">Novi korisnik</h3>
@@ -201,27 +219,32 @@
     </div>
   </div>
 </div>
+
+<div class="modal-overlay" id="modal-clan">
+  <div class="modal">
+    <h3 id="modal-clan-title">Novi clan tima</h3>
+    <input type="hidden" id="clan-id" />
+    <label>Korisnik</label><select id="clan-korisnik"></select>
+    <label>Tim</label><select id="clan-tim"></select>
+    <label>Uloga u timu</label><input type="text" id="clan-uloga" placeholder="npr. Igrac, Kapiten..." />
+    <div class="modal-error" id="clan-error"></div>
+    <div class="modal-buttons">
+      <button class="btn-cancel" onclick="closeModal('clan')">Otkazi</button>
+      <button class="btn-save" onclick="sacuvajClana()">Sacuvaj</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
-  // ===================== GLOBALNE VARIJABLE =====================
-  // Bazna adresa API-ja - mora da odgovara portu .NET servera
   const API = 'http://localhost:5177';
-
-  // JWT token, korisnicko ime i rola - citaju se iz localStorage
-  // (ostaju sacuvani i nakon osvezavanja stranice)
   let token = localStorage.getItem('gt_token') || null;
   let trenutniKorisnik = localStorage.getItem('gt_username') || null;
   let trenutnaRola = localStorage.getItem('gt_rola') || null;
 
-  // Ako je korisnik vec prijavljen (token postoji), odmah prikazi dashboard
   if (token) prikaziDashboard();
 
-  // -------------------------------------------------------
-  // login()
-  // Salje username i lozinku na /api/Auth/login.
-  // Pri uspehu cuva token i rolu u localStorage, zatim otvara dashboard.
-  // -------------------------------------------------------
   async function login() {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
@@ -233,7 +256,6 @@
       const data = await res.json();
       token = data.access_token;
       trenutniKorisnik = data.username;
-      // Rola se cuva lokalno i koristi za prikaz/skrivanje dugmadi
       trenutnaRola = data.rola;
       localStorage.setItem('gt_token', token);
       localStorage.setItem('gt_username', trenutniKorisnik);
@@ -244,10 +266,6 @@
     }
   }
 
-  // -------------------------------------------------------
-  // logout()
-  // Brise token i podatke iz localStorage, vraca korisnika na login ekran.
-  // -------------------------------------------------------
   function logout() {
     token = null; trenutniKorisnik = null; trenutnaRola = null;
     localStorage.removeItem('gt_token'); localStorage.removeItem('gt_username'); localStorage.removeItem('gt_rola');
@@ -259,13 +277,14 @@
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('username').value = '';
     document.getElementById('password').value = '';
+    // Resetuj dugmad na default (vidljiva) za sledeceg korisnika
+    document.getElementById('btnDodajTim').style.display = 'inline-block';
+    document.getElementById('btnDodajTurnir').style.display = 'inline-block';
+    document.getElementById('btnDodajMec').style.display = 'inline-block';
+    document.getElementById('nav-korisnici').style.display = 'none';
+    document.getElementById('nav-clanovi').style.display = 'none';
   }
 
-  // -------------------------------------------------------
-  // prikaziDashboard()
-  // Skriva login formu, prikazuje navigaciju i prilagodjava UI prema roli.
-  // Admin vidi stranicu "Korisnici", Igrac ne vidi dugmad za dodavanje.
-  // -------------------------------------------------------
   function prikaziDashboard() {
     document.getElementById('loginSection').style.display = 'none';
     document.getElementById('mainNav').style.display = 'flex';
@@ -273,10 +292,16 @@
     document.getElementById('userInfo').textContent = '👤 ' + trenutniKorisnik;
     document.getElementById('rolaInfo').style.display = 'inline-block';
     document.getElementById('rolaInfo').textContent = trenutnaRola;
-    // Samo Admin vidi stranicu za upravljanje korisnicima
-    if (trenutnaRola === 'Admin') document.getElementById('nav-korisnici').style.display = 'inline-block';
-    else document.getElementById('nav-korisnici').style.display = 'none';
-    // Igrac ne moze da dodaje timove, turnire ni meceve
+    if (trenutnaRola === 'Admin') {
+      document.getElementById('nav-korisnici').style.display = 'inline-block';
+      document.getElementById('nav-clanovi').style.display = 'inline-block';
+    } else if (trenutnaRola === 'Kapiten') {
+      document.getElementById('nav-korisnici').style.display = 'none';
+      document.getElementById('nav-clanovi').style.display = 'inline-block';
+    } else {
+      document.getElementById('nav-korisnici').style.display = 'none';
+      document.getElementById('nav-clanovi').style.display = 'none';
+    }
     if (trenutnaRola === 'Igrac') {
       document.getElementById('btnDodajTim').style.display = 'none';
       document.getElementById('btnDodajTurnir').style.display = 'none';
@@ -285,11 +310,6 @@
     showPage('timovi');
   }
 
-  // -------------------------------------------------------
-  // showPage(naziv)
-  // Prikazuje izabranu stranicu, skriva ostale, oznacava aktivan nav link.
-  // Automatski ucitava podatke za stranicu koja se otvara.
-  // -------------------------------------------------------
   function showPage(naziv) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
@@ -299,42 +319,32 @@
     if (naziv === 'turniri') ucitajTurnire();
     if (naziv === 'mecevi') ucitajMeceve();
     if (naziv === 'korisnici') ucitajKorisnike();
+    if (naziv === 'clanovi') ucitajClanove();
   }
 
-  // -------------------------------------------------------
-  // apiFetch(url, options)
-  // Pomocna funkcija - svaki zahtev ka API-ju automatski dobija
-  // JWT token u Authorization headeru (korisnik ne mora nista da radi).
-  // -------------------------------------------------------
   async function apiFetch(url, options = {}) {
     return fetch(API + url, { ...options, headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token, ...options.headers } });
   }
 
-  // -------------------------------------------------------
-  // ucitajTimove()
-  // Dohvata listu svih timova sa GET /api/Timovi i puni tabelu.
-  // Dugmad "Izmeni" i "Obrisi" prikazuje se prema roli korisnika.
-  // -------------------------------------------------------
   async function ucitajTimove() {
     const res = await apiFetch('/api/Timovi');
     const timovi = await res.json();
     const tb = document.getElementById('tbTimovi');
     if (!timovi.length) { tb.innerHTML = '<tr><td colspan="5" class="empty-state">Nema timova.</td></tr>'; return; }
     tb.innerHTML = timovi.map((t, i) => '<tr><td>' + (i+1) + '</td><td>' + t.naziv + '</td><td>' + t.opis + '</td><td>' + (t.datumOsnivanja||'').split('T')[0] + '</td><td>' +
-      // Izmeni dugme: vidljivo Adminu i Kapitenu (ne Igracu)
       (trenutnaRola !== 'Igrac' ? '<button class="btn-edit" onclick="editTim(' + t.timId + ',\'' + t.naziv + '\',\'' + t.opis + '\',\'' + (t.datumOsnivanja||'').split('T')[0] + '\')">Izmeni</button>' : '') +
-      // Obrisi dugme: vidljivo samo Adminu
       (trenutnaRola === 'Admin' ? '<button class="btn-delete" onclick="obrisiTim(' + t.timId + ')">Obriši</button>' : '') +
       '</td></tr>').join('');
   }
 
-  // -------------------------------------------------------
-  // openModal(tip)
-  // Otvara modal dijalog za kreiranje novog entiteta (tim/turnir/mec/korisnik).
-  // Za korisnika resetuje formu i prikazuje polje za lozinku.
-  // Za mec puni dropdown-ove sa dostupnim turnirima i timovima.
-  // -------------------------------------------------------
   function openModal(tip) {
+    if (tip === 'clan') {
+      document.getElementById('clan-id').value = '';
+      document.getElementById('clan-uloga').value = '';
+      document.getElementById('clan-error').textContent = '';
+      document.getElementById('modal-clan-title').textContent = 'Novi clan tima';
+      popuniSelectoveClan();
+    }
     if (tip === 'korisnik') {
       document.getElementById('korisnik-id').value = '';
       document.getElementById('korisnik-username').value = '';
@@ -347,20 +357,15 @@
     document.getElementById('modal-' + tip).classList.add('active');
     if (tip === 'mec') popuniSelectove();
   }
-
-  // -------------------------------------------------------
-  // closeModal(tip)
-  // Zatvara modal i brise prikaz greske unutar njega.
-  // -------------------------------------------------------
   function closeModal(tip) {
     document.getElementById('modal-' + tip).classList.remove('active');
     document.getElementById(tip + '-error').textContent = '';
+    if (tip === 'clan') {
+      document.getElementById('clan-uloga').value = '';
+      document.getElementById('clan-id').value = '';
+    }
   }
 
-  // -------------------------------------------------------
-  // editTim(id, naziv, opis, datum)
-  // Otvara modal za izmenu tima i popunjava polja postojecim podacima.
-  // -------------------------------------------------------
   function editTim(id, naziv, opis, datum) {
     document.getElementById('modal-tim-title').textContent = 'Izmeni tim';
     document.getElementById('tim-id').value = id;
@@ -370,11 +375,6 @@
     document.getElementById('modal-tim').classList.add('active');
   }
 
-  // -------------------------------------------------------
-  // sacuvajTim()
-  // Salje POST (novi tim) ili PUT (izmena) zahtev ka /api/Timovi.
-  // ID u skrivenom polju odredjuje da li je kreiranje ili izmena.
-  // -------------------------------------------------------
   async function sacuvajTim() {
     const id = document.getElementById('tim-id').value;
     const naziv = document.getElementById('tim-naziv').value.trim();
@@ -383,7 +383,6 @@
     document.getElementById('tim-error').textContent = '';
     if (!naziv || !opis || !datum) { document.getElementById('tim-error').textContent = 'Sva polja su obavezna.'; return; }
     const body = { naziv, opis, datumOsnivanja: datum };
-    // Ako postoji ID -> PUT (izmena), inace -> POST (kreiranje)
     const res = id ? await apiFetch('/api/Timovi/' + id, { method: 'PUT', body: JSON.stringify(body) }) : await apiFetch('/api/Timovi', { method: 'POST', body: JSON.stringify(body) });
     if (!res.ok) { document.getElementById('tim-error').textContent = 'Greška pri čuvanju.'; return; }
     document.getElementById('tim-id').value = '';
@@ -391,10 +390,6 @@
     closeModal('tim'); showToast(id ? 'Tim izmenjen!' : 'Tim dodat!'); ucitajTimove();
   }
 
-  // -------------------------------------------------------
-  // obrisiTim(id)
-  // Trazi potvrdu, zatim salje DELETE /api/Timovi/{id}.
-  // -------------------------------------------------------
   async function obrisiTim(id) {
     if (!confirm('Da li ste sigurni da želite da obrišete ovaj tim?')) return;
     const res = await apiFetch('/api/Timovi/' + id, { method: 'DELETE' });
@@ -402,11 +397,6 @@
     showToast('Tim obrisan!'); ucitajTimove();
   }
 
-  // -------------------------------------------------------
-  // ucitajTurnire()
-  // Dohvata listu svih turnira sa GET /api/Turniri i puni tabelu.
-  // Dugmad prikazuje samo Adminu.
-  // -------------------------------------------------------
   async function ucitajTurnire() {
     const res = await apiFetch('/api/Turniri');
     const turniri = await res.json();
@@ -418,10 +408,6 @@
       '</td></tr>').join('');
   }
 
-  // -------------------------------------------------------
-  // editTurnir(id, naziv, igrica, datum)
-  // Otvara modal za izmenu turnira i popunjava polja postojecim podacima.
-  // -------------------------------------------------------
   function editTurnir(id, naziv, igrica, datum) {
     document.getElementById('modal-turnir-title').textContent = 'Izmeni turnir';
     document.getElementById('turnir-id').value = id;
@@ -431,10 +417,6 @@
     document.getElementById('modal-turnir').classList.add('active');
   }
 
-  // -------------------------------------------------------
-  // sacuvajTurnir()
-  // Salje POST (novi turnir) ili PUT (izmena) zahtev ka /api/Turniri.
-  // -------------------------------------------------------
   async function sacuvajTurnir() {
     const id = document.getElementById('turnir-id').value;
     const naziv = document.getElementById('turnir-naziv').value.trim();
@@ -450,10 +432,6 @@
     closeModal('turnir'); showToast(id ? 'Turnir izmenjen!' : 'Turnir dodat!'); ucitajTurnire();
   }
 
-  // -------------------------------------------------------
-  // obrisiTurnir(id)
-  // Trazi potvrdu, zatim salje DELETE /api/Turniri/{id}.
-  // -------------------------------------------------------
   async function obrisiTurnir(id) {
     if (!confirm('Da li ste sigurni da želite da obrišete ovaj turnir?')) return;
     const res = await apiFetch('/api/Turniri/' + id, { method: 'DELETE' });
@@ -461,11 +439,6 @@
     showToast('Turnir obrisan!'); ucitajTurnire();
   }
 
-  // -------------------------------------------------------
-  // ucitajMeceve()
-  // Dohvata listu svih meceva sa GET /api/Mecevi i puni tabelu.
-  // Rezultat prikazuje kao "X : Y", ili "-" ako nije unet.
-  // -------------------------------------------------------
   async function ucitajMeceve() {
     const res = await apiFetch('/api/Mecevi');
     const mecevi = await res.json();
@@ -477,11 +450,6 @@
       '</td></tr>').join('');
   }
 
-  // -------------------------------------------------------
-  // popuniSelectove()
-  // Paralelno dohvata turnire i timove sa API-ja i puni
-  // dropdown-ove u modalu za mec.
-  // -------------------------------------------------------
   async function popuniSelectove() {
     const [tr, ti] = await Promise.all([apiFetch('/api/Turniri').then(r => r.json()), apiFetch('/api/Timovi').then(r => r.json())]);
     document.getElementById('mec-turnir').innerHTML = tr.map(t => '<option value="' + t.turnirId + '">' + t.naziv + '</option>').join('');
@@ -489,10 +457,6 @@
     document.getElementById('mec-tim2').innerHTML = ti.map(t => '<option value="' + t.timId + '">' + t.naziv + '</option>').join('');
   }
 
-  // -------------------------------------------------------
-  // editMec(id)
-  // Dohvata podatke meca sa API-ja, puni dropdown-ove i otvara modal za izmenu.
-  // -------------------------------------------------------
   async function editMec(id) {
     const res = await apiFetch('/api/Mecevi/' + id);
     const m = await res.json();
@@ -505,11 +469,6 @@
     document.getElementById('modal-mec').classList.add('active');
   }
 
-  // -------------------------------------------------------
-  // sacuvajMec()
-  // Validira unos (datum obavezan, timovi moraju biti razliciti),
-  // zatim salje POST (novi) ili PUT (izmena) zahtev ka /api/Mecevi.
-  // -------------------------------------------------------
   async function sacuvajMec() {
     const id = document.getElementById('mec-id').value;
     const turnirId = parseInt(document.getElementById('mec-turnir').value);
@@ -520,7 +479,6 @@
     const datum = document.getElementById('mec-datum').value;
     document.getElementById('mec-error').textContent = '';
     if (!datum) { document.getElementById('mec-error').textContent = 'Datum je obavezan.'; return; }
-    // Isti tim ne moze biti i Tim1 i Tim2 u istom mecu
     if (tim1Id === tim2Id) { document.getElementById('mec-error').textContent = 'Timovi moraju biti različiti.'; return; }
     const body = { turnirId, tim1Id, tim2Id, rezultatTim1: rez1 ? parseInt(rez1) : null, rezultatTim2: rez2 ? parseInt(rez2) : null, datumMeca: datum };
     const res = id ? await apiFetch('/api/Mecevi/' + id, { method: 'PUT', body: JSON.stringify(body) }) : await apiFetch('/api/Mecevi', { method: 'POST', body: JSON.stringify(body) });
@@ -530,10 +488,6 @@
     closeModal('mec'); showToast(id ? 'Meč izmenjen!' : 'Meč dodat!'); ucitajMeceve();
   }
 
-  // -------------------------------------------------------
-  // obrisiMec(id)
-  // Trazi potvrdu, zatim salje DELETE /api/Mecevi/{id}.
-  // -------------------------------------------------------
   async function obrisiMec(id) {
     if (!confirm('Da li ste sigurni da želite da obrišete ovaj meč?')) return;
     const res = await apiFetch('/api/Mecevi/' + id, { method: 'DELETE' });
@@ -541,17 +495,11 @@
     showToast('Meč obrisan!'); ucitajMeceve();
   }
 
-  // -------------------------------------------------------
-  // ucitajKorisnike()
-  // Dohvata listu svih korisnika sa GET /api/Korisnici i puni tabelu.
-  // Rolu prikazuje kao obojeni bedz (Admin/Kapiten/Igrac).
-  // -------------------------------------------------------
   async function ucitajKorisnike() {
     const res = await apiFetch('/api/Korisnici');
     const korisnici = await res.json();
     const tb = document.getElementById('tbKorisnici');
     if (!korisnici.length) { tb.innerHTML = '<tr><td colspan="4" class="empty-state">Nema korisnika.</td></tr>'; return; }
-    // Mapa vrednosti Rola enuma na naziv i CSS klasu bedza
     const roleMap = { 0: ['Admin', 'badge-admin'], 1: ['Kapiten', 'badge-kapiten'], 2: ['Igrac', 'badge-igrac'] };
     tb.innerHTML = korisnici.map((k, i) => {
       const [roleNaziv, roleBadge] = roleMap[k.rola] || ['?', ''];
@@ -559,27 +507,16 @@
     }).join('');
   }
 
-  // -------------------------------------------------------
-  // editKorisnik(id, username, rola)
-  // Otvara modal za izmenu korisnika i skriva polje za lozinku
-  // (lozinka se ne menja kroz PUT, vec samo username i rola).
-  // -------------------------------------------------------
   function editKorisnik(id, username, rola) {
     document.getElementById('modal-korisnik-title').textContent = 'Izmeni korisnika';
     document.getElementById('korisnik-id').value = id;
     document.getElementById('korisnik-username').value = username;
-    // Lozinka se ne prikazuje pri izmeni - PUT menja samo username i rolu
     document.getElementById('korisnik-password').style.display = 'none';
     document.getElementById('korisnik-pass-label').style.display = 'none';
     document.getElementById('korisnik-rola').value = rola;
     document.getElementById('modal-korisnik').classList.add('active');
   }
 
-  // -------------------------------------------------------
-  // sacuvajKorisnika()
-  // Kreiranje: salje POST /api/Auth/register (username + lozinka + rola).
-  // Izmena: salje PUT /api/Korisnici/{id} (samo username i rola).
-  // -------------------------------------------------------
   async function sacuvajKorisnika() {
     const id = document.getElementById('korisnik-id').value;
     const username = document.getElementById('korisnik-username').value.trim();
@@ -589,10 +526,8 @@
     if (!username) { document.getElementById('korisnik-error').textContent = 'Username je obavezan.'; return; }
     let res;
     if (id) {
-      // Izmena: PUT na /api/Korisnici bez lozinke
       res = await apiFetch('/api/Korisnici/' + id, { method: 'PUT', body: JSON.stringify({ username, rola }) });
     } else {
-      // Kreiranje: POST na /api/Auth/register sa lozinkom
       if (!password) { document.getElementById('korisnik-error').textContent = 'Lozinka je obavezna.'; return; }
       res = await apiFetch('/api/Auth/register', { method: 'POST', body: JSON.stringify({ username, password, rola }) });
     }
@@ -604,10 +539,6 @@
     closeModal('korisnik'); showToast(id ? 'Korisnik izmenjen!' : 'Korisnik dodat!'); ucitajKorisnike();
   }
 
-  // -------------------------------------------------------
-  // obrisiKorisnika(id)
-  // Trazi potvrdu, zatim salje DELETE /api/Korisnici/{id}.
-  // -------------------------------------------------------
   async function obrisiKorisnika(id) {
     if (!confirm('Da li ste sigurni da želite da obrišete ovog korisnika?')) return;
     const res = await apiFetch('/api/Korisnici/' + id, { method: 'DELETE' });
@@ -615,12 +546,54 @@
     showToast('Korisnik obrisan!'); ucitajKorisnike();
   }
 
-  // -------------------------------------------------------
-  // showToast(msg, isError)
-  // Prikazuje kratko obavestenje u donjem desnom uglu ekrana.
-  // Zeleno za uspeh, crveno kad se preda isError=true.
-  // Automatski nestaje nakon 3 sekunde.
-  // -------------------------------------------------------
+  async function ucitajClanove() {
+    const res = await apiFetch('/api/ClanoviTima');
+    const clanovi = await res.json();
+    const tb = document.getElementById('tbClanovi');
+    if (!clanovi.length) { tb.innerHTML = '<tr><td colspan="5" class="empty-state">Nema clanova tima.</td></tr>'; return; }
+    tb.innerHTML = clanovi.map((c, i) => '<tr><td>' + (i+1) + '</td><td>' + c.korisnik + '</td><td>' + c.tim + '</td><td>' + c.uloga + '</td><td>' +
+      (trenutnaRola !== 'Igrac' ? '<button class="btn-edit" onclick="editClana(' + c.clanTimaId + ')">Izmeni</button>' : '') +
+      (trenutnaRola !== 'Igrac' ? '<button class="btn-delete" onclick="obrisiClana(' + c.clanTimaId + ')">Obrisi</button>' : '') +
+      '</td></tr>').join('');
+  }
+
+  async function popuniSelectoveClan() {
+    const [ko, ti] = await Promise.all([apiFetch('/api/Korisnici').then(r => r.json()), apiFetch('/api/Timovi').then(r => r.json())]);
+    document.getElementById('clan-korisnik').innerHTML = ko.map(k => '<option value="' + k.korisnikId + '">' + k.username + '</option>').join('');
+    document.getElementById('clan-tim').innerHTML = ti.map(t => '<option value="' + t.timId + '">' + t.naziv + '</option>').join('');
+  }
+
+  async function editClana(id) {
+    await popuniSelectoveClan();
+    document.getElementById('modal-clan-title').textContent = 'Izmeni clana';
+    document.getElementById('clan-id').value = id;
+    document.getElementById('modal-clan').classList.add('active');
+  }
+
+  async function sacuvajClana() {
+    const id = document.getElementById('clan-id').value;
+    const korisnikId = parseInt(document.getElementById('clan-korisnik').value);
+    const timId = parseInt(document.getElementById('clan-tim').value);
+    const uloga = document.getElementById('clan-uloga').value.trim();
+    document.getElementById('clan-error').textContent = '';
+    if (!uloga) { document.getElementById('clan-error').textContent = 'Uloga je obavezna.'; return; }
+    const body = { korisnikId, timId, uloga };
+    const res = id
+      ? await apiFetch('/api/ClanoviTima/' + id, { method: 'PUT', body: JSON.stringify(body) })
+      : await apiFetch('/api/ClanoviTima', { method: 'POST', body: JSON.stringify(body) });
+    if (!res.ok) { document.getElementById('clan-error').textContent = 'Greska pri cuvanju.'; return; }
+    document.getElementById('clan-id').value = '';
+    document.getElementById('modal-clan-title').textContent = 'Novi clan tima';
+    closeModal('clan'); showToast(id ? 'Clan izmenjen!' : 'Clan dodat!'); ucitajClanove();
+  }
+
+  async function obrisiClana(id) {
+    if (!confirm('Da li ste sigurni da zelite da obrisete ovog clana?')) return;
+    const res = await apiFetch('/api/ClanoviTima/' + id, { method: 'DELETE' });
+    if (!res.ok) { showToast('Greska pri brisanju.', true); return; }
+    showToast('Clan obrisan!'); ucitajClanove();
+  }
+
   function showToast(msg, isError = false) {
     const toast = document.getElementById('toast');
     toast.textContent = msg;
