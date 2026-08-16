@@ -4,49 +4,19 @@ using Microsoft.EntityFrameworkCore;
 using GamingTurnir.Data;
 using GamingTurnir.Models;
 
-// ============================================================
-// VEZA BACKEND <-> FRONTEND
-// ============================================================
-// Ruta ovog kontrolera je: /api/mecevi  (definisano u [Route] ispod)
-// Frontend JavaScript/Axios poziva ove endpointe, npr:
-//   GET    /api/mecevi         -> fetch svih meceva
-//   GET    /api/mecevi/{id}    -> fetch jednog meca
-//   POST   /api/mecevi         -> kreiranje novog meca (samo Admin)
-//   PUT    /api/mecevi/{id}    -> izmena meca (samo Admin)
-//   DELETE /api/mecevi/{id}    -> brisanje meca (samo Admin)
-//
-// Frontend u zahtevu mora da posalje JWT token u headeru:
-//   Authorization: Bearer <token>
-// Token se dobija pri prijavi (Login endpoint) i cuva se u
-// localStorage ili sessionStorage na frontendu.
-// ============================================================
-
-// [Authorize] na nivou klase znaci da SVAKI endpoint zahteva
-// prijavljenog korisnika (validan JWT token).
-// ============================================================
-// ODREDJIVANJE ROLE:
-// - Gosti (neprijavljeni): nemaju pristup nicemu u ovom kontroleru
-// - Prijavljeni korisnici (bilo koja rola): mogu citati meceve (GET)
-// - Samo "Admin" rola: moze kreirati, menjati i brisati meceve
-//   (oznaceno sa [Authorize(Roles = "Admin")] na tim metodama)
-// ============================================================
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class MeceviController : ControllerBase
 {
-    // Dependancy injection - EF Core kontekst za rad sa bazom podataka
     private readonly ApplicationDbContext _context;
 
-    // Konstruktor prima kontekst kroz DI (konfigurisan u Program.cs)
     public MeceviController(ApplicationDbContext context)
     {
         _context = context;
     }
 
-    // DTO (Data Transfer Object) - definise koji podaci stizu sa frontenda
-    // pri kreiranju ili izmeni meca (POST i PUT zahtevi).
-    // Frontend salje JSON tela koja odgovaraju ovoj klasi.
+    // DTO - definise koji podaci stizu sa frontenda pri kreiranju ili izmeni meca
     public class MecDto
     {
         public int TurnirId { get; set; }
@@ -57,12 +27,7 @@ public class MeceviController : ControllerBase
         public DateTime DatumMeca { get; set; }
     }
 
-    // -------------------------------------------------------
-    // GET /api/mecevi
-    // Vraca listu svih meceva sa imenima turnira i timova.
-    // Dostupno svim prijavljenim korisnicima.
-    // Frontend koristi ovo za prikaz tabele svih meceva.
-    // -------------------------------------------------------
+    // GET /api/Mecevi - vraca listu svih meceva sa imenima turnira i timova
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -82,13 +47,7 @@ public class MeceviController : ControllerBase
         return Ok(mecevi);
     }
 
-    // -------------------------------------------------------
-    // GET /api/mecevi/{id}
-    // Vraca detalje jednog meca po ID-u.
-    // Dostupno svim prijavljenim korisnicima.
-    // Frontend koristi ovo za prikaz detalja konkretnog meca.
-    // Vraca 404 ako mec sa datim ID-em ne postoji.
-    // -------------------------------------------------------
+    // GET /api/Mecevi/{id} - vraca jedan mec po ID-u
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -109,16 +68,7 @@ public class MeceviController : ControllerBase
         });
     }
 
-    // -------------------------------------------------------
-    // POST /api/mecevi
-    // Kreira novi mec u bazi na osnovu podataka iz tela zahteva.
-    // [Authorize(Roles = "Admin")] - SAMO Admin moze da kreira mec.
-    // *** OVDE SE PROVERAVA ROLA: ako korisnik nije Admin,
-    //     server vraca HTTP 403 Forbidden bez izvrsavanja koda. ***
-    // Frontend salje JSON koji odgovara MecDto klasi.
-    // Vraca 201 Created sa podacima kreiranog meca.
-    // -------------------------------------------------------
-    // [ROLA] Samo "Admin" ima pristup ovom endpointu
+    // POST /api/Mecevi - dodaje novi mec (samo Admin)
     [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] MecDto dto)
@@ -130,23 +80,14 @@ public class MeceviController : ControllerBase
             Tim2Id = dto.Tim2Id,
             RezultatTim1 = dto.RezultatTim1,
             RezultatTim2 = dto.RezultatTim2,
-            // DateTime se konvertuje u UTC da bi se ispravno cuvao u bazi
-            DatumMeca = DateTime.SpecifyKind(dto.DatumMeca, DateTimeKind.Utc)
+            DatumMeca = DateTime.SpecifyKind(dto.DatumMeca, DateTimeKind.Utc) // Konvertuje u UTC za bazu
         };
         _context.Mecevi.Add(mec);
         await _context.SaveChangesAsync();
         return Created("", new { mec.MecId, mec.TurnirId, mec.Tim1Id, mec.Tim2Id, mec.RezultatTim1, mec.RezultatTim2, mec.DatumMeca });
     }
 
-    // -------------------------------------------------------
-    // PUT /api/mecevi/{id}
-    // Azurira postojeci mec sa novim podacima iz tela zahteva.
-    // [Authorize(Roles = "Admin")] - SAMO Admin moze da menja mec.
-    // *** OVDE SE PROVERAVA ROLA: ako korisnik nije Admin,
-    //     server vraca HTTP 403 Forbidden bez izvrsavanja koda. ***
-    // Vraca 404 ako mec ne postoji, ili 204 No Content pri uspehu.
-    // -------------------------------------------------------
-    // [ROLA] Samo "Admin" ima pristup ovom endpointu
+    // PUT /api/Mecevi/{id} - menja mec (samo Admin)
     [Authorize(Roles = "Admin")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] MecDto dto)
@@ -165,15 +106,7 @@ public class MeceviController : ControllerBase
         return NoContent();
     }
 
-    // -------------------------------------------------------
-    // DELETE /api/mecevi/{id}
-    // Brise mec iz baze po ID-u.
-    // [Authorize(Roles = "Admin")] - SAMO Admin moze da brise mec.
-    // *** OVDE SE PROVERAVA ROLA: ako korisnik nije Admin,
-    //     server vraca HTTP 403 Forbidden bez izvrsavanja koda. ***
-    // Vraca 404 ako mec ne postoji, ili 204 No Content pri uspehu.
-    // -------------------------------------------------------
-    // [ROLA] Samo "Admin" ima pristup ovom endpointu
+    // DELETE /api/Mecevi/{id} - brise mec (samo Admin)
     [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)

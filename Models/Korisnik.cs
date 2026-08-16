@@ -1,26 +1,19 @@
 namespace GamingTurnir.Models;
 
-// Enum koji definise moguce role korisnika u sistemu
+// Role korisnika - odredjuju sta korisnik moze da radi
 public enum Rola
 {
-    Admin,    // Puni pristup - upravljanje svim entitetima
-    Kapiten,  // Moze da izmeni tim
-    Igrac     // Samo pregled podataka
+    Admin,    // Puni pristup
+    Kapiten,  // Moze da menja timove i dodaje clanove
+    Igrac     // Samo pregled
 }
 
-// Predstavlja korisnika sistema.
-// Cuva username, hash lozinke, rolu i datum registracije.
-// Koristi se za login i autorizaciju putem JWT tokena.
+// Predstavlja korisnika sistema
 public class Korisnik
 {
-    // Jedinstveni identifikator korisnika (auto-increment)
     public int KorisnikId { get; set; }
-    // Korisnicko ime - mora biti jedinstveno
     public string Username { get; set; }
-    // Lozinka se cuva kao hash, nikad kao tekst
-    public string PasswordHash { get; set; }
-    // Rola odredjuje sta korisnik moze da radi (Admin/Kapiten/Igrac)
+    public string PasswordHash { get; set; } // Lozinka se cuva kao hash, nikad kao tekst
     public Rola Rola { get; set; }
-    // Automatski se postavlja na trenutno vreme pri registraciji
     public DateTime DatumRegisdtracije { get; set; } = DateTime.UtcNow;
 }

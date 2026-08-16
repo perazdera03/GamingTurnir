@@ -16,6 +16,7 @@ public class ClanoviTimaController : ControllerBase
         _context = context;
     }
 
+    // DTO za kreiranje/izmenu clana tima
     public class ClanTimaDto
     {
         public int KorisnikId { get; set; }
@@ -23,6 +24,7 @@ public class ClanoviTimaController : ControllerBase
         public string Uloga { get; set; }
     }
 
+    // GET /api/ClanoviTima - vraca listu svih clanova sa imenima korisnika i timova
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -38,6 +40,7 @@ public class ClanoviTimaController : ControllerBase
         return Ok(clanovi);
     }
 
+    // GET /api/ClanoviTima/{id} - vraca jednog clana po ID-u
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
     {
@@ -54,6 +57,7 @@ public class ClanoviTimaController : ControllerBase
         });
     }
 
+    // POST /api/ClanoviTima - dodaje novog clana tima (Admin i Kapiten)
     [Authorize(Roles = "Admin,Kapiten")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] ClanTimaDto dto)
@@ -69,6 +73,7 @@ public class ClanoviTimaController : ControllerBase
         return Created("", new { clan.ClanTimaId, clan.KorisnikId, clan.TimId, clan.Uloga });
     }
 
+    // PUT /api/ClanoviTima/{id} - menja podatke clana tima (Admin i Kapiten)
     [Authorize(Roles = "Admin,Kapiten")]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] ClanTimaDto dto)
@@ -84,7 +89,8 @@ public class ClanoviTimaController : ControllerBase
         return NoContent();
     }
 
-    [Authorize(Roles = "Admin,Kapiten")]
+    // DELETE /api/ClanoviTima/{id} - brise clana tima (samo Admin)
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
